@@ -9,20 +9,14 @@ admin.initializeApp({
 var db = admin.firestore();
 db.settings({ timestampsInSnapshots: true })
 
-// var docRef = db.collection('users').doc('alovelace');
-//
-// var setAda = docRef.set({
-//   first: 'Ada',
-//   last: 'Lovelace three',
-//   born: 1815
-// });
-
-
-const docRef = db.collection('planningApps').doc('manc3');
+const batch = db.batch()
 
 scrapeManchester().then(data => {
-  let setData = docRef.set({
-    scrape: data,
+  data.forEach(app => {
+    const id = app.ref.replace(/\W/g, '') // remove any non-alphanumeric characters - not allowed for Firestore keys
+    console.log(`Adding app ${id}`)
+    const docRef = db.collection('planningApps').doc(id)
+    batch.set(docRef, app)
   })
-  console.log(setData)
+  batch.commit().then(response => console.log(`Commit response: ${JSON.stringify(response, null, 2)}`))
 })
