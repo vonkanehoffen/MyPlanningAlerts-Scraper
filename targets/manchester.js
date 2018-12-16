@@ -38,8 +38,9 @@ function getPageData($) {
 module.exports = async function () {
 
   // Testing....
-  return dummyResponse;
+  // return dummyResponse;
 
+  console.log('Starting Manchester Council scrape...')
   // 1. Get latest week
 
   const searchForm = await fetch(
@@ -52,7 +53,7 @@ module.exports = async function () {
   const $searchForm = cheerio.load(await searchForm.text())
   const latestDate = $searchForm('select#week option').first().attr('value')
   const cookies = cookie.parse(searchForm.headers.get('set-cookie'))
-  console.log("GOT LATEST DATE: ", latestDate, "COOOKIES: ", cookies)
+  console.log("Got latests date: ", latestDate)
 
   // 2. Get page 1
 
@@ -64,6 +65,7 @@ module.exports = async function () {
   params.append('dateType', 'DC_Validated');
   params.append('searchType', 'Application');
 
+  console.log('Getting first page...')
   const firstPage = await fetch(
     'https://pa.manchester.gov.uk/online-applications/weeklyListResults.do?action=firstPage',
     {
@@ -87,11 +89,13 @@ module.exports = async function () {
     console.error(`Page count is ${pageCount}. Parsing problem?`)
     return false
   }
-  console.log("PAGE COUNT: ", pageCount)
+  console.log("Total page count: ", pageCount)
 
   // 3. Scrape data from results into object
 
   let results = getPageData($firstPageText)
+
+  console.log(`Parsed ${results.length+1} results from first page`)
 
   // Iterate over subsequent pages
 
@@ -99,7 +103,7 @@ module.exports = async function () {
     let pagedSearchResults;
 
     for(let i = 2; i < pageCount + 1; i++) {
-      console.log(`GETTING PAGE ${i}...`)
+      console.log(`Getting page ${i}...`)
       pagedSearchResults = await fetch(
         `https://pa.manchester.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=${i}`,
         {
@@ -109,8 +113,11 @@ module.exports = async function () {
           },
         })
 
-      results = [...results, ...getPageData(cheerio.load(await pagedSearchResults.text()))]
+      const pageData = getPageData(cheerio.load(await pagedSearchResults.text()))
 
+      console.log(`Parsed ${pageData.length+1} results from page ${i}`)
+
+      results = [...results, ...pageData]
     }
 
   }
@@ -122,6 +129,8 @@ module.exports = async function () {
     return false;
   }
 
+  console.log(`Geocoding ${results.length+1} results...`)
+
   for(let i = 0; i < results.length; i++) {
     const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${querystring.stringify({
       address: results[i].address,
@@ -131,7 +140,7 @@ module.exports = async function () {
     results[i].geocodeStatus = location.status
 
     if(location.status === 'OK') {
-      console.log('geocoded: ', location.results[0].formatted_address)
+      console.log('Geocoded: ', location.results[0].formatted_address)
       results[i].lat = location.results[0].geometry.location.lat;
       results[i].lng = location.results[0].geometry.location.lng;
     } else {
