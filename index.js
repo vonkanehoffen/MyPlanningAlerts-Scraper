@@ -14,9 +14,14 @@ const batch = db.batch()
 scrapeManchester().then(data => {
   data.forEach(app => {
     const id = app.ref.replace(/\W/g, '') // remove any non-alphanumeric characters - not allowed for Firestore keys
-    console.log(`Adding app ${id}`)
-    const docRef = db.collection('planningApps').doc(id)
-    batch.set(docRef, app)
+    const doc = db.collection('planningApps').doc(id)
+    // if(doc.exists()) {
+      console.log(`Updating app ${id}`)
+      batch.update(doc, app)
+    // } else {
+    //   console.log(`Adding app ${id}`)
+    //   batch.set(doc, app)
+    // }
   })
   batch.commit().then(response => console.log(`Commit response: ${JSON.stringify(response, null, 2)}`))
 })
