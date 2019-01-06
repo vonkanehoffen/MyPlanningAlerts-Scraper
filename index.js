@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const admin = require('firebase-admin');
 const colors = require('colors')
 const geokit = require('geokit')
@@ -18,7 +19,7 @@ async function doScrape() {
   const data = await scrapeManchester();
 
   const geofirestore = new GeoFirestore(db);
-  const geocollection = geofirestore.collection('planningApps');
+  const geocollection = geofirestore.collection('planningLocations');
 
   console.log(`Storing ${data.length+1} scraped planning applications...`)
   for(let i = 0; i < data.length; i++) {
@@ -35,15 +36,24 @@ async function doScrape() {
     const doc = await geocollection.doc(hash).get()
 
     if(doc.exists) {
-      console.log('hash exists: ', hash, doc.data());
-      // console.log(`Batch: Update app ${id}`)
-      // batch.update(docRef, data[i])
-    } else {
-      console.log(`Add app ${hash}`)
+      const apps = doc.data().apps;
+      console.log(`Update app ${hash} - ${app.address}`);
+      // console.log(`Existing apps: ${JSON.stringify(apps, null, 2)}`);
+      apps.push(app);
+
+      const newApps = _.uniqWith(apps, (a, b) => a.ref === b.ref)
+
       await geocollection.doc(hash).set({
-        ...data[i],
+        apps: newApps,
         coordinates,
-      })
+      });
+
+    } else {
+      console.log(`Add app ${hash} - ${app.address}`)
+      await geocollection.doc(hash).set({
+        apps: [ app ],
+        coordinates,
+      });
     }
   }
 
