@@ -30,6 +30,10 @@
     faye-websocket "0.11.1"
     tslib "1.9.0"
 
+"@firebase/firestore-types@0.x.x":
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/@firebase/firestore-types/-/firestore-types-0.8.0.tgz#a40b2ed03eda9c189af145acdff408e562976345"
+
 "@firebase/logger@0.1.2":
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/@firebase/logger/-/logger-0.1.2.tgz#b8f11c855ce20db792cac583da0b8b8b01418f3a"
@@ -63,7 +67,7 @@
     string-format-obj "^1.1.0"
     through2 "^2.0.3"
 
-"@google-cloud/firestore@^0.19.0":
+"@google-cloud/firestore@0.x.x", "@google-cloud/firestore@^0.19.0":
   version "0.19.0"
   resolved "https://registry.yarnpkg.com/@google-cloud/firestore/-/firestore-0.19.0.tgz#c16c426a2af33badfa0257245bc04730c7094fec"
   dependencies:
@@ -203,6 +207,10 @@
 "@types/node@^9.4.6":
   version "9.6.40"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-9.6.40.tgz#2d69cefbc090cb0bb824542a4c575b14dde7d3aa"
+
+"@types/node@x.x.x":
+  version "10.12.18"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.18.tgz#1d3ca764718915584fcd9f6344621b7672665c67"
 
 "@types/request@*":
   version "2.48.1"
@@ -713,6 +721,18 @@ gcs-resumable-upload@^0.10.2:
     pumpify "^1.4.0"
     request "^2.85.0"
     stream-events "^1.0.3"
+
+geofirestore@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/geofirestore/-/geofirestore-3.0.1.tgz#20d2153764df179ab2ce16e310f92a7864e81997"
+  dependencies:
+    "@firebase/firestore-types" "0.x.x"
+    "@google-cloud/firestore" "0.x.x"
+    "@types/node" x.x.x
+
+geokit@^0.1.3:
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/geokit/-/geokit-0.1.3.tgz#ae6d18f8508f9627a314673b34e3c6e377e49eeb"
 
 getpass@^0.1.1:
   version "0.1.7"

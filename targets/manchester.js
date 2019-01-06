@@ -6,7 +6,7 @@ const fetch = require('node-fetch')
 const querystring = require('querystring');
 const cookie = require('cookie');
 const { URLSearchParams } = require('url');
-const dummyResponse = require('../dummyData/weekly_03-Dec-2018')
+const dummyResponse = require('../dummyData/doScrape_full_return_5_jan_2018')
 
 
 const readFile = promisify(fs.readFile)
