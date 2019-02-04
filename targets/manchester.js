@@ -8,6 +8,8 @@ const cookie = require('cookie');
 const { URLSearchParams } = require('url');
 const dummyResponse = require('../dummyData/doScrape_full_return_5_jan_2018')
 
+const rootURL = 'https://pa.manchester.gov.uk/online-applications/';
+// const rootURL = 'https://publicaccess.trafford.gov.uk/online-applications/';
 
 const readFile = promisify(fs.readFile)
 
@@ -44,7 +46,7 @@ module.exports = async function () {
   // 1. Get latest week
 
   const searchForm = await fetch(
-    'https://pa.manchester.gov.uk/online-applications/search.do?action=weeklyList&searchType=Application', {
+    `${rootURL}search.do?action=weeklyList&searchType=Application`, {
       headers: {
         'User-Agent': config.userAgent,
       }
@@ -67,7 +69,7 @@ module.exports = async function () {
 
   console.log('Getting first page...')
   const firstPage = await fetch(
-    'https://pa.manchester.gov.uk/online-applications/weeklyListResults.do?action=firstPage',
+    `${rootURL}weeklyListResults.do?action=firstPage`,
     {
       method: 'POST',
       headers: {
@@ -105,7 +107,7 @@ module.exports = async function () {
     for(let i = 2; i < pageCount + 1; i++) {
       console.log(`Getting page ${i}...`)
       pagedSearchResults = await fetch(
-        `https://pa.manchester.gov.uk/online-applications/pagedSearchResults.do?action=page&searchCriteria.page=${i}`,
+        `${rootURL}pagedSearchResults.do?action=page&searchCriteria.page=${i}`,
         {
           headers: {
             'User-Agent': config.userAgent,
