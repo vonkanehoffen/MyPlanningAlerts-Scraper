@@ -1,16 +1,9 @@
 const cheerio = require("cheerio");
-const fs = require("fs");
-const { promisify } = require("util");
 const config = require("../../config");
 const fetch = require("node-fetch");
-const querystring = require("querystring");
 const cookie = require("cookie");
 const { URLSearchParams } = require("url");
 const { log, error } = require("../../helpers/log");
-const dummyResponse = require("../../dummyData/doScrape_full_return_5_jan_2018");
-const parseListPage = require("./parseList");
-
-const readFile = promisify(fs.readFile);
 
 let sessionCookie;
 
@@ -22,24 +15,26 @@ let sessionCookie;
 async function start(rootURL) {
   const searchFormHTML = await getSearchForm(rootURL);
   const listDate = getLatestListDate(searchFormHTML);
+
   const weeklyValidatedList = await getWeeklyList(
     rootURL,
     listDate,
     "DC_Validated"
   );
-  const detailURLs = getDetailURLs(weeklyValidatedList);
 
-  let planningApps = [];
-  for (let i = 0; i < detailURLs.length; i++) {
-    const url = new URL(rootURL).origin + detailURLs[i];
-    const page = await getApplicationDetail(rootURL, url);
-    planningApps.push({
-      url,
-      ...getDetailFields(page)
-    });
+  const detailURLs = getDetailURLs(weeklyValidatedList);
+  let planningApps = await getAllApplicationDetails(rootURL, detailURLs);
+  let nextURL = getNextURL(weeklyValidatedList);
+  while (nextURL) {
+    const nextPage = await getPage(nextURL, rootURL);
+    const detailURLs = getDetailURLs(nextPage);
+    let apps = await getAllApplicationDetails(rootURL, detailURLs);
+    planningApps.push(...apps);
+    nextURL = getNextURL(nextPage);
   }
 
   console.log(planningApps);
+  // TODO: Decided list
   // const weeklyDecidedList = await getWeeklyList(listDate, "DC_Decided");
 }
 
@@ -144,8 +139,21 @@ function getDetailFields(html) {
   };
 }
 
-async function getApplicationDetail(url) {
-  log(`getApplicationDetail: ${url}`);
+/**
+ * Fetch a page (with session cookie set)
+ * @param rootURL
+ * @param url
+ * @returns {Promise<*>}
+ */
+async function getPage(url, rootURL) {
+  // Check it's absolute and correct if not...
+  // Pagination URLs come both ways?!
+  try {
+    new URL(url);
+  } catch (e) {
+    url = new URL(rootURL).origin + url;
+  }
+  log(`getPage: ${url}`);
   const page = await fetch(url, {
     method: "GET",
     headers: {
@@ -157,140 +165,33 @@ async function getApplicationDetail(url) {
   return await page.text();
 }
 
-////////////////////////////////////////////old..
-
-async function idox(rootURL) {
-  // Testing....
-  // return dummyResponse;
-
-  // 1. Get latest week
-
-  const scrapeStartURL = `${rootURL}search.do?action=weeklyList&searchType=Application`;
-  log(`Starting scrape from ${scrapeStartURL}`);
-
-  const searchForm = await fetch(scrapeStartURL, {
-    headers: {
-      "User-Agent": config.userAgent
-    }
-  });
-
-  const $searchForm = cheerio.load(await searchForm.text());
-  const latestDate = $searchForm("select#week option")
-    .first()
-    .attr("value");
-  const cookies = cookie.parse(searchForm.headers.get("set-cookie"));
-  console.log("cookies:", cookies);
-  if (!latestDate) throw "Unable to scrape latest date";
-  log("Scraped latest date: ", latestDate);
-
-  // 2. Get page 1
-
-  const params = new URLSearchParams();
-
-  params.append("searchCriteria.ward", "");
-  params.append("week", latestDate);
-  // params.append('week', '26 Nov 2018'); // testing
-  params.append("dateType", "DC_Validated");
-  params.append("searchType", "Application");
-
-  const firstPageURL = `${rootURL}weeklyListResults.do?action=firstPage`;
-  log("Scraping first page: ", firstPageURL);
-
-  const firstPage = await fetch(firstPageURL, {
-    method: "POST",
-    headers: {
-      "User-Agent": config.userAgent,
-      Cookie: cookie.serialize("JSESSIONID", cookies.JSESSIONID)
-    },
-    body: params
-  });
-
-  // Testing...
-  // const firstPageText = await readFile('./input/weeklyListResults-firstPage.do.html', 'utf8')
-  // const firstPageText = await readFile(
-  //   "./dummyData/weekly-single.html",
-  //   "utf8"
-  // );
-  const $firstPageText = cheerio.load(await firstPage.text());
-
-  // Parse page and get page count
-  // const $firstPageText = cheerio.load(await firstPage.text());
-  const pageCount = parseInt(
-    $firstPageText(".pager .page")
-      .last()
-      .text()
-  );
-
-  // Protect against things getting wild and DOSing the council...
-  if (pageCount > 30 || isNaN(pageCount)) {
-    throw `Page count is ${pageCount}. Parsing problem?`;
+/**
+ * Loop through an array of detail page URLs
+ * @param rootURL
+ * @param detailURLs
+ * @returns {Promise<Array>}
+ */
+async function getAllApplicationDetails(rootURL, detailURLs) {
+  let planningApps = [];
+  for (let i = 0; i < detailURLs.length; i++) {
+    const url = new URL(rootURL).origin + detailURLs[i];
+    const page = await getPage(url, rootURL);
+    planningApps.push({
+      url,
+      ...getDetailFields(page)
+    });
   }
-  log(`Total page count: ${pageCount}`);
+  return planningApps;
+}
 
-  // 3. Scrape data from results into object
-
-  let results = parseListPage($firstPageText);
-
-  log(`Parsed ${results.length + 1} results from first page`);
-
-  // Iterate over subsequent pages
-
-  if (pageCount > 1) {
-    let pagedSearchResults;
-
-    for (let i = 2; i < pageCount + 1; i++) {
-      const nextPage = `${rootURL}pagedSearchResults.do?action=page&searchCriteria.page=${i}`;
-      log(`Scraping next page: ${nextPage}`);
-      pagedSearchResults = await fetch(nextPage, {
-        headers: {
-          "User-Agent": config.userAgent,
-          Cookie: cookie.serialize("JSESSIONID", cookies.JSESSIONID)
-        }
-      });
-
-      const pageData = parseListPage(
-        cheerio.load(await pagedSearchResults.text())
-      );
-
-      log(`Parsed ${pageData.length + 1} results from page ${i}`);
-
-      results = [...results, ...pageData];
-    }
-  }
-
-  // 4. Geocode all addresses
-
-  if (results.length > 500) {
-    throw "Over 500 results to geocode. Has the scrape got carried away?";
-  }
-  if (results.length < 1) {
-    throw "No results to geocode.";
-  }
-
-  log(`Geocoding ${results.length + 1} results...`);
-
-  for (let i = 0; i < results.length; i++) {
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?${querystring.stringify(
-        {
-          address: results[i].address,
-          key: config.geocodingAPIKey
-        }
-      )}`
-    );
-    const location = await response.json();
-    results[i].geocodeStatus = location.status;
-
-    if (location.status === "OK") {
-      log(`Geocoded: ${location.results[0].formatted_address}`);
-      results[i].lat = location.results[0].geometry.location.lat;
-      results[i].lng = location.results[0].geometry.location.lng;
-    } else {
-      error(`Geocoding failure for ${results[i].address}. Response:`, location);
-    }
-  }
-
-  return results;
+/**
+ * Get the pagination "next page" URL if it exists.
+ * @param html
+ * @returns {*}
+ */
+function getNextURL(html) {
+  const $ = cheerio.load(html);
+  return $(".pager .next").attr("href");
 }
 
 module.exports = start;

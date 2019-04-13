@@ -1,13 +1,7 @@
 const fetch = require("node-fetch");
 const config = require("../config");
 const colors = require("colors");
-
-const makeString = args =>
-  args.reduce((acc, curr) => {
-    return (
-      acc + (typeof curr === "string" ? curr : JSON.stringify(curr, null, 2))
-    );
-  }, "");
+const util = require("util");
 
 function sendToSlack(message) {
   const data = { text: message };
@@ -22,15 +16,15 @@ function sendToSlack(message) {
 }
 
 function log(...args) {
-  const message = makeString(args);
+  const message = util.format(...args);
   console.log("LOG: ".grey, message);
-  sendToSlack(message);
+  sendToSlack(`*LOG:* ${message}`);
 }
 
 function error(...args) {
-  const message = makeString(args);
-  console.error(...args);
-  sendToSlack(`ERROR: ${message}`);
+  const message = util.format(...args);
+  console.error("ERROR: ".red, message);
+  sendToSlack(`*ERROR:* ${message}`);
 }
 
 module.exports = {

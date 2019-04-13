@@ -1,7 +1,6 @@
 const _ = require("lodash");
 const admin = require("firebase-admin");
 const colors = require("colors");
-const geokit = require("geokit");
 const {
   GeoCollectionReference,
   GeoFirestore,
@@ -9,54 +8,52 @@ const {
   GeoQuerySnapshot
 } = require("geofirestore");
 const serviceAccount = require("./serviceAccountKey.json");
-const scrapeManchester = require("./targets/manchester");
+const scrapeIdox = require("./targets/idox/");
+const storeInGeoFirestore = require("./targets/storeInGeoFirestore");
+const { log, error } = require("./helpers/log");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+const fs = require("fs");
+const { promisify } = require("util");
+const readFile = promisify(fs.readFile);
 
-var db = admin.firestore();
-db.settings({ timestampsInSnapshots: true });
+try {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
 
-async function doScrape() {
-  const data = await scrapeManchester();
+  var db = admin.firestore();
+  db.settings({ timestampsInSnapshots: true });
 
-  const geofirestore = new GeoFirestore(db);
-  const geocollection = geofirestore.collection("planningLocations");
+  async function doScrape() {
+    // Think all these use "idox": http://www.idoxgroup.com/
+    // const rootURL = "https://pa.manchester.gov.uk/online-applications";
+    // const rootURL = "https://publicaccess.trafford.gov.uk/online-applications";
+    // const rootURL = "https://www.planningpa.bolton.gov.uk/online-applications-17";
+    // const rootURL = "https://planning.bury.gov.uk/online-applications";
+    // const rootURL = "http://planningpa.oldham.gov.uk/online-applications";
+    // const rootURL = "http://publicaccess.rochdale.gov.uk/online-applications";
 
-  console.log(`Storing ${data.length + 1} scraped planning applications...`);
-  for (let i = 0; i < data.length; i++) {
-    const app = data[i];
+    const data = await scrapeIdox(
+      "http://publicaccess.rochdale.gov.uk/online-applications"
+    );
 
-    const hash = geokit.Geokit.hash({
-      lat: app.lat,
-      lng: app.lng
-    });
-    const coordinates = new admin.firestore.GeoPoint(app.lat, app.lng);
+    console.log(data);
+    // Testing...
+    // let data = await readFile(
+    //   "./dummyData/runOutputs/rochdale1.json",
+    //   "utf8"
+    // );
+    //
+    // data = await(geocodeResults)
+    return;
 
-    // const id = data[i].ref.replace(/\W/g, '') // remove any non-alphanumeric characters - not allowed for Firestore keys
-    const doc = await geocollection.doc(hash).get();
-
-    if (doc.exists) {
-      const apps = doc.data().apps;
-      console.log(`Update app ${hash} - ${app.address}`);
-      // console.log(`Existing apps: ${JSON.stringify(apps, null, 2)}`);
-      apps.push(app);
-
-      const newApps = _.uniqWith(apps, (a, b) => a.ref === b.ref);
-
-      await geocollection.doc(hash).set({
-        apps: newApps,
-        coordinates
-      });
-    } else {
-      console.log(`Add app ${hash} - ${app.address}`);
-      await geocollection.doc(hash).set({
-        apps: [app],
-        coordinates
-      });
-    }
+    // const geofirestore = new GeoFirestore(db);
+    // const geocollection = geofirestore.collection("planningLocations");
+    //
+    // await storeInGeoFirestore(data, geocollection);
   }
-}
 
-doScrape();
+  doScrape();
+} catch (e) {
+  error(e);
+}
