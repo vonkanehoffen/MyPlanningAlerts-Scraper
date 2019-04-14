@@ -23,6 +23,9 @@ async function geocodeAddress(address) {
 /**
  * Batch geocodes a block of results from a scraper.
  * Mutates input with geocode response.
+ *
+ * Unused: Done directly in storeInGeoFirestore as we don't want to store the full response.
+ *
  * @param results
  * @returns {Promise<*>}
  */

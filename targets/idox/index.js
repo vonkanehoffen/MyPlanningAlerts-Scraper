@@ -4,7 +4,6 @@ const fetch = require("node-fetch");
 const cookie = require("cookie");
 const { URLSearchParams } = require("url");
 const { log, error } = require("../../helpers/log");
-const { geocodeResults } = require("../geocoding");
 
 const fs = require("fs");
 const { promisify } = require("util");
@@ -24,8 +23,6 @@ async function start(rootURL) {
   let validatedPlanningApps = JSON.parse(
     await readFile("./dummyData/runOutputs/rochdale1-partial.json", "utf8")
   );
-
-  await geocodeResults(validatedPlanningApps);
 
   return validatedPlanningApps;
   // TODO: Decided list

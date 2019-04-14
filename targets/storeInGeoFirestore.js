@@ -3,6 +3,7 @@ const firestore = require("firebase-admin").firestore;
 const geokit = require("geokit");
 const { log, error } = require("../helpers/log");
 const config = require("../config");
+const { geocodeAddress } = require("../targets/geocoding");
 
 /**
  * Add planning data to a GeoFirestore collection
@@ -20,8 +21,10 @@ async function storeInGeoFirestore(data, geocollection) {
   for (let i = 0; i < data.length; i++) {
     let app = data[i];
 
-    // If geocoding failed, don't store the result.
-    const location = _.get(app, "geocode.results[0].geometry.location");
+    const geocode = await geocodeAddress(app.address);
+    app.geocodeStatus = geocode.status;
+    const location = _.get(geocode, "results[0].geometry.location");
+
     if (!location) {
       error("App not geocoded. Unable to store:", app);
       continue;
@@ -38,15 +41,22 @@ async function storeInGeoFirestore(data, geocollection) {
 
     if (geoDoc.exists) {
       // This location already has planning apps.
-      // Let's add this new one and remove any old version of it with uniq.
-      const apps = geoDoc.data().apps;
+      // Let's add this new one or update an existing one if we find a matching reference no.
+      let apps = geoDoc.data().apps;
       log(`Update location - hash: ${hash} - planning ref: ${app.reference}`);
-      apps.push(app);
-      const newApps = _.uniqWith(apps, (a, b) => a.reference === b.reference);
+
+      const existingAppIndex = apps.findIndex(
+        a => a.reference === app.reference
+      );
+      if (existingAppIndex > -1) {
+        apps[existingAppIndex] = app;
+      } else {
+        apps.push(app);
+      }
 
       await geocollection.doc(hash).update({
         updatedAt: firestore.FieldValue.serverTimestamp(),
-        apps: newApps,
+        apps,
         coordinates
       });
     } else {
