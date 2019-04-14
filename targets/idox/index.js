@@ -4,6 +4,11 @@ const fetch = require("node-fetch");
 const cookie = require("cookie");
 const { URLSearchParams } = require("url");
 const { log, error } = require("../../helpers/log");
+const { geocodeResults } = require("../geocoding");
+
+const fs = require("fs");
+const { promisify } = require("util");
+const readFile = promisify(fs.readFile);
 
 let sessionCookie;
 
@@ -13,14 +18,33 @@ let sessionCookie;
  * @returns {Promise<void>}
  */
 async function start(rootURL) {
+  // const validatedPlanningApps = await scrapeFullList(rootURL, "DC_Validated");
+
+  // Testing...
+  let validatedPlanningApps = JSON.parse(
+    await readFile("./dummyData/runOutputs/rochdale1-partial.json", "utf8")
+  );
+
+  await geocodeResults(validatedPlanningApps);
+
+  return validatedPlanningApps;
+  // TODO: Decided list
+  // const weeklyDecidedList = await getWeeklyList(listDate, "DC_Decided");
+}
+
+/**
+ * Scrape a full weekly planning list data set
+ * Iterates over pages etc.
+ *
+ * @param rootURL
+ * @param dateType
+ * @returns {Promise<Array>}
+ */
+async function scrapeFullList(rootURL, dateType) {
   const searchFormHTML = await getSearchForm(rootURL);
   const listDate = getLatestListDate(searchFormHTML);
 
-  const weeklyValidatedList = await getWeeklyList(
-    rootURL,
-    listDate,
-    "DC_Validated"
-  );
+  const weeklyValidatedList = await getWeeklyList(rootURL, listDate, dateType);
 
   const detailURLs = getDetailURLs(weeklyValidatedList);
   let planningApps = await getAllApplicationDetails(rootURL, detailURLs);
@@ -32,10 +56,7 @@ async function start(rootURL) {
     planningApps.push(...apps);
     nextURL = getNextURL(nextPage);
   }
-
-  console.log(planningApps);
-  // TODO: Decided list
-  // const weeklyDecidedList = await getWeeklyList(listDate, "DC_Decided");
+  return planningApps;
 }
 
 /**

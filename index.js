@@ -12,10 +12,6 @@ const scrapeIdox = require("./targets/idox/");
 const storeInGeoFirestore = require("./targets/storeInGeoFirestore");
 const { log, error } = require("./helpers/log");
 
-const fs = require("fs");
-const { promisify } = require("util");
-const readFile = promisify(fs.readFile);
-
 try {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -37,20 +33,9 @@ try {
       "http://publicaccess.rochdale.gov.uk/online-applications"
     );
 
-    console.log(data);
-    // Testing...
-    // let data = await readFile(
-    //   "./dummyData/runOutputs/rochdale1.json",
-    //   "utf8"
-    // );
-    //
-    // data = await(geocodeResults)
-    return;
-
-    // const geofirestore = new GeoFirestore(db);
-    // const geocollection = geofirestore.collection("planningLocations");
-    //
-    // await storeInGeoFirestore(data, geocollection);
+    const geofirestore = new GeoFirestore(db);
+    const geocollection = geofirestore.collection("planningLocations");
+    await storeInGeoFirestore(data, geocollection);
   }
 
   doScrape();

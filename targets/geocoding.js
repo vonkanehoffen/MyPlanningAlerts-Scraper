@@ -22,20 +22,20 @@ async function geocodeAddress(address) {
 
 /**
  * Batch geocodes a block of results from a scraper.
+ * Mutates input with geocode response.
  * @param results
  * @returns {Promise<*>}
  */
 async function geocodeResults(results) {
-  for (let i = 0; i < results.length; i++) {
-    console.log(result.address);
+  if (results.length > config.itemLimit) {
+    error(`More than ${config.itemLimit} results to geocode. Aborting.`);
+    return;
   }
-  // return results.map(async result => {
-  //   const location = await geocodeAddress(result.address);
-  //   return {
-  //     ...result,
-  //     location
-  //   };
-  // });
+  for (let i = 0; i < results.length; i++) {
+    if (results[i].address) {
+      results[i].geocode = await geocodeAddress(results[i].address);
+    }
+  }
 }
 
 module.exports = { geocodeAddress, geocodeResults };

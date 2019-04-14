@@ -1,49 +1,60 @@
 const _ = require("lodash");
-const admin = require("firebase-admin");
+const firestore = require("firebase-admin").firestore;
 const geokit = require("geokit");
 const { log, error } = require("../helpers/log");
+const config = require("../config");
 
 /**
- * Iterate over an array of planning app data
- * Geocode the locations and add or update records against them
+ * Add planning data to a GeoFirestore collection
  * @param data
  * @param geocollection
  * @returns {Promise<void>}
  */
 async function storeInGeoFirestore(data, geocollection) {
+  if (data.length > config.itemLimit) {
+    error(`More than ${config.itemLimit} results to store. Aborting.`);
+    return;
+  }
+
   log(`Storing ${data.length} scraped planning applications...`);
   for (let i = 0; i < data.length; i++) {
-    const app = data[i];
+    let app = data[i];
 
     // If geocoding failed, don't store the result.
     const location = _.get(app, "geocode.results[0].geometry.location");
-    if (!location) break;
+    if (!location) {
+      error("App not geocoded. Unable to store:", app);
+      continue;
+    }
 
-    // Generate a hash. This will be the key for the record
+    // Generate a hash for the location
     const hash = geokit.Geokit.hash({
       lat: location.lat,
       lng: location.lng
     });
-    const coordinates = new admin.firestore.GeoPoint(app.lat, app.lng);
+    const coordinates = new firestore.GeoPoint(location.lat, location.lng);
 
-    // const id = data[i].ref.replace(/\W/g, '') // remove any non-alphanumeric characters - not allowed for Firestore keys
-    const doc = await geocollection.doc(hash).get();
+    const geoDoc = await geocollection.doc(hash).get();
 
-    if (doc.exists) {
-      const apps = doc.data().apps;
-      console.log(`Update app ${hash} - ${app.address}`);
-      // console.log(`Existing apps: ${JSON.stringify(apps, null, 2)}`);
+    if (geoDoc.exists) {
+      // This location already has planning apps.
+      // Let's add this new one and remove any old version of it with uniq.
+      const apps = geoDoc.data().apps;
+      log(`Update location - hash: ${hash} - planning ref: ${app.reference}`);
       apps.push(app);
+      const newApps = _.uniqWith(apps, (a, b) => a.reference === b.reference);
 
-      const newApps = _.uniqWith(apps, (a, b) => a.ref === b.ref);
-
-      await geocollection.doc(hash).set({
+      await geocollection.doc(hash).update({
+        updatedAt: firestore.FieldValue.serverTimestamp(),
         apps: newApps,
         coordinates
       });
     } else {
-      console.log(`Add app ${hash} - ${app.address}`);
+      // This is a new location.
+      // Add the app to it.
+      log(`Add location - hash: ${hash} - planning ref: ${app.reference}`);
       await geocollection.doc(hash).set({
+        createdAt: firestore.FieldValue.serverTimestamp(),
         apps: [app],
         coordinates
       });
