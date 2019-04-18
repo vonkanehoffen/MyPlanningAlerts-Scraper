@@ -3,7 +3,7 @@ const config = require("../../config");
 const fetch = require("node-fetch");
 const cookie = require("cookie");
 const { URLSearchParams } = require("url");
-const { log, error } = require("../../helpers/log");
+const logger = require("../../logger");
 
 const fs = require("fs");
 const { promisify } = require("util");
@@ -14,11 +14,9 @@ let sessionCookie;
 /**
  * Start the scrape for an idox powered planning portal
  * @param rootURL
- * @returns {Promise<void>}
+ * @returns {Promise<Array>}
  */
 async function start(rootURL) {
-  // const validatedPlanningApps = await scrapeFullList(rootURL, "DC_Validated");
-
   // Testing...
   // let validatedPlanningApps = JSON.parse(
   //   await readFile("./dummyData/runOutputs/rochdale1-partial.json", "utf8")
@@ -27,8 +25,9 @@ async function start(rootURL) {
   // return validatedPlanningApps;
   // TODO: Decided list
 
+  const validatedPlanningApps = await scrapeFullList(rootURL, "DC_Validated");
   const decidedPlanningApps = await scrapeFullList(rootURL, "DC_Decided");
-  return decidedPlanningApps;
+  return [...validatedPlanningApps, ...decidedPlanningApps];
 }
 
 /**
@@ -40,14 +39,15 @@ async function start(rootURL) {
  * @returns {Promise<Array>}
  */
 async function scrapeFullList(rootURL, dateType) {
+  logger.info("scrapeFullList", { rootURL, dateType });
   const searchFormHTML = await getSearchForm(rootURL);
   const listDate = getLatestListDate(searchFormHTML);
 
-  const weeklyValidatedList = await getWeeklyList(rootURL, listDate, dateType);
+  const weeklyList = await getWeeklyList(rootURL, listDate, dateType);
 
-  const detailURLs = getDetailURLs(weeklyValidatedList);
+  const detailURLs = getDetailURLs(weeklyList);
   let planningApps = await getAllApplicationDetails(rootURL, detailURLs);
-  let nextURL = getNextURL(weeklyValidatedList);
+  let nextURL = getNextURL(weeklyList);
   while (nextURL) {
     const nextPage = await getPage(nextURL, rootURL);
     const detailURLs = getDetailURLs(nextPage);
@@ -66,7 +66,7 @@ async function scrapeFullList(rootURL, dateType) {
  */
 async function getSearchForm(rootURL) {
   const searchFormURL = `${rootURL}/search.do?action=weeklyList&searchType=Application`;
-  log(`getSearchForm: ${searchFormURL}`);
+  logger.info("getSearchForm", { searchFormURL });
   const searchForm = await fetch(searchFormURL, {
     headers: {
       "User-Agent": config.userAgent
@@ -106,7 +106,8 @@ async function getWeeklyList(rootURL, week, dateType) {
   params.append("searchType", "Application");
 
   const firstPageURL = `${rootURL}/weeklyListResults.do?action=firstPage`;
-  log("getWeeklyList: ", firstPageURL);
+
+  logger.info("getWeeklyList", { firstPageURL });
 
   const firstPage = await fetch(firstPageURL, {
     method: "POST",
@@ -175,7 +176,7 @@ async function getPage(url, rootURL) {
   } catch (e) {
     url = new URL(rootURL).origin + url;
   }
-  log(`getPage: ${url}`);
+  logger.info("getPage", { url });
   const page = await fetch(url, {
     method: "GET",
     headers: {

@@ -1,7 +1,7 @@
 const config = require("../config");
 const fetch = require("node-fetch");
 const querystring = require("querystring");
-const { log, error } = require("../helpers/log");
+const logger = require("../logger");
 
 /**
  * Takes a text address and geocode it via google's API
@@ -16,7 +16,7 @@ async function geocodeAddress(address) {
     })}`
   );
   const geocode = await response.json();
-  log(`geocodeAddress: status=${geocode.status} ${address}`);
+  logger.info("geocodeAddress", { status: geocode.status, address });
   return geocode;
 }
 
@@ -31,7 +31,7 @@ async function geocodeAddress(address) {
  */
 async function geocodeResults(results) {
   if (results.length > config.itemLimit) {
-    error(`More than ${config.itemLimit} results to geocode. Aborting.`);
+    logger.error(`More than ${config.itemLimit} results to geocode. Aborting.`);
     return;
   }
   for (let i = 0; i < results.length; i++) {

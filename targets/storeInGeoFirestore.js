@@ -1,9 +1,9 @@
 const _ = require("lodash");
 const firestore = require("firebase-admin").firestore;
 const geokit = require("geokit");
-const { log, error } = require("../helpers/log");
 const config = require("../config");
 const { geocodeAddress } = require("../targets/geocoding");
+const logger = require("../logger");
 
 /**
  * Add planning data to a GeoFirestore collection
@@ -13,11 +13,11 @@ const { geocodeAddress } = require("../targets/geocoding");
  */
 async function storeInGeoFirestore(data, geocollection) {
   if (data.length > config.itemLimit) {
-    error(`More than ${config.itemLimit} results to store. Aborting.`);
+    logger.error(`More than ${config.itemLimit} results to store. Aborting.`);
     return;
   }
 
-  log(`Storing ${data.length} scraped planning applications...`);
+  logger.info(`Storing ${data.length} scraped planning applications...`);
   for (let i = 0; i < data.length; i++) {
     let app = data[i];
 
@@ -26,7 +26,7 @@ async function storeInGeoFirestore(data, geocollection) {
     const location = _.get(geocode, "results[0].geometry.location");
 
     if (!location) {
-      error("App not geocoded. Unable to store:", app);
+      logger.error("App not geocoded. Unable to store", { app });
       continue;
     }
 
@@ -43,7 +43,7 @@ async function storeInGeoFirestore(data, geocollection) {
       // This location already has planning apps.
       // Let's add this new one or update an existing one if we find a matching reference no.
       let apps = geoDoc.data().apps;
-      log(`Update location - hash: ${hash} - planning ref: ${app.reference}`);
+      logger.info("Update location", { hash, app });
 
       const existingAppIndex = apps.findIndex(
         a => a.reference === app.reference
@@ -62,7 +62,7 @@ async function storeInGeoFirestore(data, geocollection) {
     } else {
       // This is a new location.
       // Add the app to it.
-      log(`Add location - hash: ${hash} - planning ref: ${app.reference}`);
+      logger.info("Add location", { hash, app });
       await geocollection.doc(hash).set({
         createdAt: firestore.FieldValue.serverTimestamp(),
         apps: [app],

@@ -1,26 +1,22 @@
-const _ = require("lodash");
 const admin = require("firebase-admin");
-const colors = require("colors");
-const {
-  GeoCollectionReference,
-  GeoFirestore,
-  GeoQuery,
-  GeoQuerySnapshot
-} = require("geofirestore");
+const { GeoFirestore } = require("geofirestore");
 const serviceAccount = require("./serviceAccountKey.json");
 const scrapeIdox = require("./targets/idox/");
 const storeInGeoFirestore = require("./targets/storeInGeoFirestore");
-const { log, error } = require("./helpers/log");
+const logger = require("./logger");
+const config = require("./config");
+// const Sentry = require("@sentry/node");
+// Sentry.init({ dsn: config.sentryDSN, debug: true });
 
-try {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
+async function doScrape() {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
 
-  var db = admin.firestore();
-  db.settings({ timestampsInSnapshots: true });
+    const db = admin.firestore();
+    db.settings({ timestampsInSnapshots: true });
 
-  async function doScrape() {
     // Think all these use "idox": http://www.idoxgroup.com/
     // const rootURL = "https://pa.manchester.gov.uk/online-applications";
     // const rootURL = "https://publicaccess.trafford.gov.uk/online-applications";
@@ -36,9 +32,9 @@ try {
     const geofirestore = new GeoFirestore(db);
     const geocollection = geofirestore.collection("planningLocations");
     await storeInGeoFirestore(data, geocollection);
+  } catch (e) {
+    logger.error(e);
   }
-
-  doScrape();
-} catch (e) {
-  error(e);
 }
+
+doScrape();
