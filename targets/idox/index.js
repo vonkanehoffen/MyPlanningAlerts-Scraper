@@ -20,13 +20,15 @@ async function start(rootURL) {
   // const validatedPlanningApps = await scrapeFullList(rootURL, "DC_Validated");
 
   // Testing...
-  let validatedPlanningApps = JSON.parse(
-    await readFile("./dummyData/runOutputs/rochdale1-partial.json", "utf8")
-  );
+  // let validatedPlanningApps = JSON.parse(
+  //   await readFile("./dummyData/runOutputs/rochdale1-partial.json", "utf8")
+  // );
 
-  return validatedPlanningApps;
+  // return validatedPlanningApps;
   // TODO: Decided list
-  // const weeklyDecidedList = await getWeeklyList(listDate, "DC_Decided");
+
+  const decidedPlanningApps = await scrapeFullList(rootURL, "DC_Decided");
+  return decidedPlanningApps;
 }
 
 /**
@@ -152,6 +154,8 @@ function getDetailFields(html) {
     applicationValidated: getField("Application Validated"),
     address: getField("Address"),
     proposal: getField("Proposal"),
+    decision: getField("Decision\n"),
+    decisionIssuedDate: getField("Decision Issued Date"),
     appealStatus: getField("Appeal Status"),
     appealDecision: getField("Appeal Decision")
   };
