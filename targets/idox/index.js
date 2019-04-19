@@ -18,17 +18,21 @@ let sessionCookie;
  */
 async function start(rootURL) {
   logger.log("warn", `Starting idox scrape: ${rootURL}`);
+
   // Testing...
   // let validatedPlanningApps = JSON.parse(
   //   await readFile("./dummyData/runOutputs/rochdale1-partial.json", "utf8")
   // );
 
-  // return validatedPlanningApps;
-  // TODO: Decided list
-
   const validatedPlanningApps = await scrapeFullList(rootURL, "DC_Validated");
   const decidedPlanningApps = await scrapeFullList(rootURL, "DC_Decided");
-  return [...validatedPlanningApps, ...decidedPlanningApps];
+  const results = [...validatedPlanningApps, ...decidedPlanningApps];
+
+  logger.log(
+    "warn",
+    `Finished idox scrape with ${results.length} results: ${rootURL}`
+  );
+  return results;
 }
 
 /**

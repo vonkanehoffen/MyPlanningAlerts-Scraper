@@ -16,22 +16,23 @@ async function doScrape() {
 
     const db = admin.firestore();
     db.settings({ timestampsInSnapshots: true });
-
-    // Think all these use "idox": http://www.idoxgroup.com/
-    // const rootURL = "https://pa.manchester.gov.uk/online-applications";
-    // const rootURL = "https://publicaccess.trafford.gov.uk/online-applications";
-    // const rootURL = "https://www.planningpa.bolton.gov.uk/online-applications-17";
-    // const rootURL = "https://planning.bury.gov.uk/online-applications";
-    // const rootURL = "http://planningpa.oldham.gov.uk/online-applications";
-    // const rootURL = "http://publicaccess.rochdale.gov.uk/online-applications";
-
-    const data = await scrapeIdox(
-      "http://publicaccess.rochdale.gov.uk/online-applications"
-    );
-
     const geofirestore = new GeoFirestore(db);
     const geocollection = geofirestore.collection("planningLocations");
-    await storeInGeoFirestore(data, geocollection);
+
+    // Think all these use "idox": http://www.idoxgroup.com/
+    const idoxSites = [
+      "https://pa.manchester.gov.uk/online-applications",
+      "https://publicaccess.trafford.gov.uk/online-applications",
+      "https://www.planningpa.bolton.gov.uk/online-applications-17",
+      "https://planning.bury.gov.uk/online-applications",
+      "http://planningpa.oldham.gov.uk/online-applications",
+      "http://publicaccess.rochdale.gov.uk/online-applications"
+    ];
+
+    for (let i = 0; i < idoxSites.length; i++) {
+      const data = await scrapeIdox(idoxSites[i]);
+      await storeInGeoFirestore(data, geocollection);
+    }
   } catch (e) {
     logger.error(e);
   }
