@@ -16,7 +16,7 @@ async function geocodeAddress(address) {
     })}`
   );
   const geocode = await response.json();
-  logger.info("geocodeAddress", { status: geocode.status, address });
+  logger.info(`geocodeAddress: ${geocode.status}`, { geocode });
   return geocode;
 }
 

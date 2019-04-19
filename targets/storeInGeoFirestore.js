@@ -43,7 +43,7 @@ async function storeInGeoFirestore(data, geocollection) {
       // This location already has planning apps.
       // Let's add this new one or update an existing one if we find a matching reference no.
       let apps = geoDoc.data().apps;
-      logger.info("Update location", { hash, app });
+      logger.info(`Update location: ${app.address}`, { hash, app });
 
       const existingAppIndex = apps.findIndex(
         a => a.reference === app.reference
@@ -62,7 +62,7 @@ async function storeInGeoFirestore(data, geocollection) {
     } else {
       // This is a new location.
       // Add the app to it.
-      logger.info("Add location", { hash, app });
+      logger.info(`Add location: ${app.address}`, { hash, app });
       await geocollection.doc(hash).set({
         createdAt: firestore.FieldValue.serverTimestamp(),
         apps: [app],

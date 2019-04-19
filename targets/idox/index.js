@@ -112,8 +112,6 @@ async function getWeeklyList(rootURL, week, dateType) {
 
   const firstPageURL = `${rootURL}/weeklyListResults.do?action=firstPage`;
 
-  logger.info("getWeeklyList", { firstPageURL });
-
   const firstPage = await fetch(firstPageURL, {
     method: "POST",
     headers: {
