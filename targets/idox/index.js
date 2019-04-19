@@ -17,6 +17,7 @@ let sessionCookie;
  * @returns {Promise<Array>}
  */
 async function start(rootURL) {
+  logger.log("warn", `Starting idox scrape: ${rootURL}`);
   // Testing...
   // let validatedPlanningApps = JSON.parse(
   //   await readFile("./dummyData/runOutputs/rochdale1-partial.json", "utf8")
@@ -66,13 +67,13 @@ async function scrapeFullList(rootURL, dateType) {
  */
 async function getSearchForm(rootURL) {
   const searchFormURL = `${rootURL}/search.do?action=weeklyList&searchType=Application`;
-  logger.info("getSearchForm", { searchFormURL });
   const searchForm = await fetch(searchFormURL, {
     headers: {
       "User-Agent": config.userAgent
     }
   });
   const searchFormHTML = await searchForm.text();
+  logger.info(`getSearchForm: ${searchFormURL}`, { searchFormHTML });
   const cookies = cookie.parse(searchForm.headers.get("set-cookie"));
   sessionCookie = cookie.serialize("JSESSIONID", cookies.JSESSIONID);
   return searchFormHTML;
@@ -118,7 +119,9 @@ async function getWeeklyList(rootURL, week, dateType) {
     body: params
   });
 
-  return await firstPage.text();
+  const text = await firstPage.text();
+  logger.info(`getWeeklyList: ${firstPageURL}`, { text });
+  return text;
 }
 
 /**
@@ -176,7 +179,6 @@ async function getPage(url, rootURL) {
   } catch (e) {
     url = new URL(rootURL).origin + url;
   }
-  logger.info("getPage", { url });
   const page = await fetch(url, {
     method: "GET",
     headers: {
@@ -185,7 +187,9 @@ async function getPage(url, rootURL) {
     }
   });
 
-  return await page.text();
+  const text = await page.text();
+  logger.info(`getPage: ${url}`, { text });
+  return text;
 }
 
 /**
