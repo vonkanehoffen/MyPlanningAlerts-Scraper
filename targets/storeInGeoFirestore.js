@@ -26,7 +26,11 @@ async function storeInGeoFirestore(data, geocollection) {
     const location = _.get(geocode, "results[0].geometry.location");
 
     if (!location) {
-      logger.error("App not geocoded. Unable to store", { app });
+      // TODO: Some way to have manual entry for these un-geocodable addresses.
+      logger.error(
+        `App not geocoded. Unable to store. Address: ${app.address}`,
+        { app }
+      );
       continue;
     }
 
