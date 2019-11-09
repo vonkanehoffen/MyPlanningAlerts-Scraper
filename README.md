@@ -9,7 +9,12 @@ Hence this.
 
 Create `config.js` using the format in `config.example.js` and you're good to go.
 
-Tested on Node v10.4.1.
+Tested on Node v12.13.0.
+
+```
+npx babel-node whatever.js
+```
+for local dev
 
 Deploy with [PM2](https://pm2.io/), configured in `ecosystem.config.js`. `pm2 start` sets a cron job up to run things weekly.
 
