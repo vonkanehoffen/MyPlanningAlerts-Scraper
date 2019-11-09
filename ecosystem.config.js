@@ -8,7 +8,17 @@ module.exports = {
       args: "",
       instances: 1,
       autorestart: false,
-      cron_restart: "0 0 12 * * TUE",
+      /**
+       * unix cron format: http://man7.org/linux/man-pages/man5/crontab.5.html
+       * field          allowed values
+       -----          --------------
+       minute         0-59
+       hour           0-23
+       day of month   1-31
+       month          1-12 (or names, see below)
+       day of week    0-7 (0 or 7 is Sunday, or use names)
+       */
+      cron_restart: "0 9 * * TUE",
       watch: false,
       max_memory_restart: "1G",
       env: {
