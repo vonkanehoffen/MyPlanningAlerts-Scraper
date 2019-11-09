@@ -3,7 +3,7 @@
 
 Scrapes data from local councils' weekly planning lists.
 
-You'd have thought here would be an API already, hut apparently not... except this one: https://www.landinsight.io/api that costs £45 a month.
+You'd have thought here would be an API already, but apparently not... except this one: https://www.landinsight.io/api that costs £45 a month.
 
 Hence this.
 
@@ -17,3 +17,39 @@ Logs stored in `log/` with winston. JSON format. Best viewed with something like
 
 Also posts warn level log messages to Slack channel. See hook in config.
  
+## Data Structure
+
+### Council Websites (idox)
+
+
+
+### Firebase
+Three tables:
+
+ - planningAppsCurrent - GeoFirestore
+ - planningAppsArchive - GeoFirestore
+ - planningAppsScrapeErrors
+
+
+Location: {
+    apps:{
+        [appId]: {
+            appName
+            expiryDate
+            ...
+        },
+        ...
+    ],
+    address
+]
+
+archiveOld()
+
+searches all locations for expired planning apps 
+  - moves them from current to archive
+  - removes empty locations from current.
+
+planningAppsCurrent deals with day to day searches from the app
+planningAppsArchive we'll use later for whatever historical things we might want to find out.
+
+planningAppsScrapeErrors stores data there's been a problem geocoding etc. Un-codable addresses. Stores html 
