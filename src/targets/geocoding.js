@@ -1,14 +1,14 @@
-const config = require("../config");
-const fetch = require("node-fetch");
-const querystring = require("querystring");
-const logger = require("../logger");
+import config from "../../config";
+import fetch from "node-fetch";
+import querystring from "querystring";
+import logger from "../logger";
 
 /**
  * Takes a text address and geocode it via google's API
  * @param address
  * @returns {Promise<void>}
  */
-async function geocodeAddress(address) {
+export async function geocodeAddress(address) {
   const response = await fetch(
     `https://maps.googleapis.com/maps/api/geocode/json?${querystring.stringify({
       address: address,
@@ -29,7 +29,7 @@ async function geocodeAddress(address) {
  * @param results
  * @returns {Promise<*>}
  */
-async function geocodeResults(results) {
+export async function geocodeResults(results) {
   if (results.length > config.itemLimit) {
     logger.error(`More than ${config.itemLimit} results to geocode. Aborting.`);
     return;
@@ -40,5 +40,3 @@ async function geocodeResults(results) {
     }
   }
 }
-
-module.exports = { geocodeAddress, geocodeResults };

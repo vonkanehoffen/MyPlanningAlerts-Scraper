@@ -1,12 +1,12 @@
-const cheerio = require("cheerio");
-const config = require("../../config");
-const fetch = require("node-fetch");
-const cookie = require("cookie");
-const { URLSearchParams } = require("url");
-const logger = require("../../logger");
+import cheerio from "cheerio";
+import config from "../../../config";
+import fetch from "node-fetch";
+import cookie from "cookie";
+import { URLSearchParams } from "url";
+import logger from "../../logger";
+import fs from "fs";
+import { promisify } from "util";
 
-const fs = require("fs");
-const { promisify } = require("util");
 const readFile = promisify(fs.readFile);
 
 let sessionCookie;
@@ -16,7 +16,7 @@ let sessionCookie;
  * @param rootURL
  * @returns {Promise<Array>}
  */
-async function start(rootURL) {
+export default async function start(rootURL) {
   logger.log("warn", `Starting idox scrape: ${rootURL}`);
 
   // Testing...
@@ -222,5 +222,3 @@ function getNextURL(html) {
   const $ = cheerio.load(html);
   return $(".pager .next").attr("href");
 }
-
-module.exports = start;

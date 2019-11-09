@@ -5,7 +5,7 @@
  * @param $ - cheerio'd DOM
  * @returns {Array}
  */
-function parseListPage($) {
+export default function parseListPage($) {
   let results = [];
   $("#searchresults .searchresult").each((i, r) => {
     const item = {
@@ -43,5 +43,3 @@ function parseListPage($) {
   });
   return results;
 }
-
-module.exports = parseListPage;

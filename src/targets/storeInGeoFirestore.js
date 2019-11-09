@@ -1,9 +1,9 @@
-const _ = require("lodash");
-const firestore = require("firebase-admin").firestore;
-const geokit = require("geokit");
-const config = require("../config");
-const { geocodeAddress } = require("../targets/geocoding");
-const logger = require("../logger");
+import _ from "lodash";
+import { firestore } from "firebase-admin";
+import geokit from "geokit";
+import config from "../../config";
+import { geocodeAddress } from "./geocoding";
+import logger from "../logger";
 
 /**
  * Add planning data to a GeoFirestore collection
@@ -11,7 +11,7 @@ const logger = require("../logger");
  * @param geocollection
  * @returns {Promise<void>}
  */
-async function storeInGeoFirestore(data, geocollection) {
+export default async function storeInGeoFirestore(data, geocollection) {
   if (data.length > config.itemLimit) {
     logger.error(`More than ${config.itemLimit} results to store. Aborting.`);
     return;
@@ -75,5 +75,3 @@ async function storeInGeoFirestore(data, geocollection) {
     }
   }
 }
-
-module.exports = storeInGeoFirestore;

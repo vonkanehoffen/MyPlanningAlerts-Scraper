@@ -1,9 +1,9 @@
-const admin = require("firebase-admin");
-const { GeoFirestore } = require("geofirestore");
-const scrapeIdox = require("./targets/idox/");
-const storeInGeoFirestore = require("./targets/storeInGeoFirestore");
-const logger = require("./logger");
-const config = require("./config");
+import admin from "firebase-admin";
+import { GeoFirestore } from "geofirestore";
+import scrapeIdox from "./targets/idox/";
+import storeInGeoFirestore from "./targets/storeInGeoFirestore";
+import logger from "./logger";
+import config from "../config";
 // const Sentry = require("@sentry/node");
 // Sentry.init({ dsn: config.sentryDSN, debug: true });
 

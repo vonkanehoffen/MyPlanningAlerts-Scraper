@@ -1,6 +1,6 @@
-const { createLogger, format, transports } = require("winston");
-const SlackHook = require("winston-slack-webhook-transport");
-const config = require("./config");
+import { createLogger, format, transports } from "winston";
+import SlackHook from "winston-slack-webhook-transport";
+import config from "../config";
 
 const logger = createLogger({
   level: "info",
@@ -36,4 +36,4 @@ if (process.env.NODE_ENV !== "production") {
   );
 }
 
-module.exports = logger;
+export default logger;
