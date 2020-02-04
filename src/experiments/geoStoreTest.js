@@ -1,5 +1,5 @@
 import { firestore } from "firebase-admin";
-import initGeoCollection from "../helpers/initGeoCollection";
+import { initGeoCollection } from "../helpers/initFirebase";
 
 const testGeoCollection = initGeoCollection("testGeoCollection");
 

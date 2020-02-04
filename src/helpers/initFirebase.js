@@ -6,8 +6,13 @@ firebase.initializeApp({
   credential: firebase.credential.cert(config.serviceAccountKey)
 });
 
-export default function initGeoCollection(collectionPath) {
-  const firestore = firebase.firestore();
+const firestore = firebase.firestore();
+
+export function initGeoCollection(collectionPath) {
   const geoFirestore = new GeoFirestore(firestore);
   return geoFirestore.collection(collectionPath);
+}
+
+export function initCollection(collectionPath) {
+  return firestore.collection(collectionPath);
 }

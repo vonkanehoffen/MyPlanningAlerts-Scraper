@@ -4,8 +4,9 @@ import scrapeIdox from "./targets/idox/";
 import storeInGeoFirestore from "./targets/storeInGeoFirestore";
 import logger from "./logger";
 import config from "../config";
-// const Sentry = require("@sentry/node");
-// Sentry.init({ dsn: config.sentryDSN, debug: true });
+
+const Sentry = require("@sentry/node");
+Sentry.init({ dsn: config.sentryDSN, debug: true });
 
 async function doScrape() {
   try {

@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "MyPlanningAlerts-Scraper",
-      script: "index.js",
+      script: "dist/index.js",
 
       // Options reference: https://pm2.io/doc/en/runtime/reference/ecosystem-file/
       args: "",
@@ -38,7 +38,7 @@ module.exports = {
       repo: "https://github.com/vonkanehoffen/MyPlanningAlerts-Scraper",
       path: "/var/www/MyPlanningAlerts-Scraper",
       "post-deploy":
-        "npm install && pm2 reload ecosystem.config.js --env production"
+        "npm install && && npm run build && pm2 reload ecosystem.config.js --env production"
     }
   }
 };
